@@ -23,6 +23,8 @@ ID_WXPANEL1 = 1020
 
 WX_STAY_ON_TOP = 0x8000
 
+RHAPSODY_PATH = 'c:\\Program Files\\Rhapsody\\rhapsody.exe'
+
 class MainFrame(wx.Frame):
     albumArt = None
     songTrack = None
@@ -42,9 +44,9 @@ class MainFrame(wx.Frame):
         wx.Frame.__init__(self, parent, -1, title, size=wx.Size(400,225), style = wx.DEFAULT_FRAME_STYLE | WX_STAY_ON_TOP)
 
         self.mainPanel = wx.Panel(self, ID_WXPANEL1, wx.Point(0,0), wx.Size(400,225))
-	self.mainSizer = wx.BoxSizer(wx.VERTICAL);
-	self.SetSizer(self.mainSizer);
-	self.SetAutoLayout(True);
+        self.mainSizer = wx.BoxSizer(wx.VERTICAL);
+        self.SetSizer(self.mainSizer);
+        self.SetAutoLayout(True);
 
         self.lastSongSizer1 = wx.BoxSizer(wx.HORIZONTAL)
         self.lastSongSizer2 = wx.BoxSizer(wx.VERTICAL)
@@ -53,26 +55,26 @@ class MainFrame(wx.Frame):
 
         self.albumArt = wx.StaticBitmap(self, wx.ID_ANY, wx.NullBitmap, size = wx.Size(96,96))
         
-	self.songTrack = wx.StaticText(self.mainPanel, wx.ID_ANY, "Track");
-	self.songTrack.Disable()
+        self.songTrack = wx.StaticText(self.mainPanel, wx.ID_ANY, "Track");
+        self.songTrack.Disable()
 
-	self.songArtist = wx.StaticText(self.mainPanel, wx.ID_ANY, "Artist");
-	self.songArtist.Disable()
+        self.songArtist = wx.StaticText(self.mainPanel, wx.ID_ANY, "Artist");
+        self.songArtist.Disable()
 
-	self.songAlbum = wx.StaticText(self.mainPanel, wx.ID_ANY, "Album");
-	self.songAlbum.Disable()
+        self.songAlbum = wx.StaticText(self.mainPanel, wx.ID_ANY, "Album");
+        self.songAlbum.Disable()
 
-	titleText = wx.StaticText(self.mainPanel, ID_WXSTATICTEXT1, "RhapScrobbler", wx.Point(147,3), wx.DefaultSize, 0, "WxStaticText1");
-	titleText.SetFont(wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL,wx.FONTWEIGHT_NORMAL, False, "Tahoma"));
+        titleText = wx.StaticText(self.mainPanel, ID_WXSTATICTEXT1, "RhapScrobbler", wx.Point(147,3), wx.DefaultSize, 0, "WxStaticText1");
+        titleText.SetFont(wx.Font(12, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL,wx.FONTWEIGHT_NORMAL, False, "Tahoma"));
 
-	hideButton = wx.Button(self.mainPanel, ID_WXBUTTON1, "Hide", wx.Point(131,20), wx.Size(75,25), 0, wx.DefaultValidator, "WxButton1");
-	hideButton.Bind(wx.EVT_BUTTON, self.onHide)
+        hideButton = wx.Button(self.mainPanel, ID_WXBUTTON1, "Hide", wx.Point(131,20), wx.Size(75,25), 0, wx.DefaultValidator, "WxButton1");
+        hideButton.Bind(wx.EVT_BUTTON, self.onHide)
 
-	configButton = wx.Button(self.mainPanel, ID_WXBUTTON2, "Configure", wx.Point(143,55), wx.Size(75,25), 0, wx.DefaultValidator, "WxButton2");
+        configButton = wx.Button(self.mainPanel, ID_WXBUTTON2, "Configure", wx.Point(143,55), wx.Size(75,25), 0, wx.DefaultValidator, "WxButton2");
         configButton.Bind(wx.EVT_BUTTON, self.btnConfig)
 
-	quitButton = wx.Button(self.mainPanel, ID_WXBUTTON3, "Quit", wx.Point(143,90), wx.Size(75,25), 0, wx.DefaultValidator, "WxButton3");
-	quitButton.Bind(wx.EVT_BUTTON, self.btnQuit)
+        quitButton = wx.Button(self.mainPanel, ID_WXBUTTON3, "Quit", wx.Point(143,90), wx.Size(75,25), 0, wx.DefaultValidator, "WxButton3");
+        quitButton.Bind(wx.EVT_BUTTON, self.btnQuit)
 
         self.lastSongSizer1.Add(self.albumArt,0,wx.ALIGN_CENTER | wx.ALL,5)
         self.lastSongSizer2.Add(self.songTrack,0,wx.ALL,2)
@@ -80,22 +82,22 @@ class MainFrame(wx.Frame):
         self.lastSongSizer2.Add(self.songAlbum,0,wx.ALL,2)
         self.lastSongSizer1.Add(self.lastSongSizer2,0,wx.ALIGN_TOP | wx.ALL,5)
 
-	buttonSizer.Add(hideButton,0,wx.ALIGN_CENTER | wx.ALL,5);
-	buttonSizer.Add(configButton,0,wx.ALIGN_CENTER | wx.ALL,5);
-	buttonSizer.Add(quitButton,0,wx.ALIGN_CENTER | wx.ALL,5);
+        buttonSizer.Add(hideButton,0,wx.ALIGN_CENTER | wx.ALL,5);
+        buttonSizer.Add(configButton,0,wx.ALIGN_CENTER | wx.ALL,5);
+        buttonSizer.Add(quitButton,0,wx.ALIGN_CENTER | wx.ALL,5);
 
-	self.mainSizer.Add(titleText,0,wx.ALIGN_CENTER | wx.ALL,5);
-	self.mainSizer.Add(self.lastSongSizer1,0,wx.ALL,5);
-	self.mainSizer.Add(buttonSizer,0,wx.ALIGN_CENTER | wx.ALL,5);
+        self.mainSizer.Add(titleText,0,wx.ALIGN_CENTER | wx.ALL,5);
+        self.mainSizer.Add(self.lastSongSizer1,0,wx.ALL,5);
+        self.mainSizer.Add(buttonSizer,0,wx.ALIGN_CENTER | wx.ALL,5);
 
-	self.SetTitle("RhapScrobbler");
-	self.SetIcon(wx.NullIcon);
+        self.SetTitle("RhapScrobbler");
+        self.SetIcon(wx.NullIcon);
 
         self.Bind(wx.EVT_CLOSE, self.onClose)
         self.Bind(wx.EVT_ICONIZE, self.onHide)
         
-	self.GetSizer().Layout();
-	self.Center();
+        self.GetSizer().Layout();
+        self.Center();
 
         wx.InitAllImageHandlers()
 
@@ -114,9 +116,8 @@ class MainFrame(wx.Frame):
         if config.has_key("LastFM") and config.has_key("Rhapsody"):
             if config["Rhapsody"].has_key("startrhapsody") and config["Rhapsody"]["startrhapsody"] == "True" and reinitialize == False:
                 # TODO: this should probably check the registry instead
-                if os.path.exists('c:\\Program Files\\Rhapsody\\rhapsody.exe'):
-                    print "starting rhapsody"
-                    os.spawnl(os.P_NOWAIT, 'c:\\Program Files\\Rhapsody\\rhapsody.exe')
+                if os.path.exists(RHAPSODY_PATH):
+                    os.spawnl(os.P_NOWAIT, RHAPSODY_PATH)
 
 
             if config["LastFM"].has_key("username") and config["LastFM"].has_key("password"):
@@ -270,11 +271,11 @@ class ConfigDialog(wx.Dialog):
         
         buttonPanel = wx.Panel(self, style = wx.TAB_TRAVERSAL | wx.ALL)
 
-	okButton = wx.Button(buttonPanel, wx.ID_ANY, "OK");
-	okButton.Bind(wx.EVT_BUTTON, self.btnOk)
+        okButton = wx.Button(buttonPanel, wx.ID_ANY, "OK");
+        okButton.Bind(wx.EVT_BUTTON, self.btnOk)
 
-	cancelButton = wx.Button(buttonPanel, wx.ID_ANY, "Cancel");
-	cancelButton.Bind(wx.EVT_BUTTON, self.btnCancel)
+        cancelButton = wx.Button(buttonPanel, wx.ID_ANY, "Cancel");
+        cancelButton.Bind(wx.EVT_BUTTON, self.btnCancel)
 
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
         buttonSizer.Add(okButton, 0, wx.ALIGN_CENTER)
@@ -352,7 +353,7 @@ class ConfigDialogLastFM(wx.Panel):
 
         userLabel = wx.StaticText(self, wx.ID_ANY, "Username", wx.Point(15,55), wx.DefaultSize)
         passLabel = wx.StaticText(self, wx.ID_ANY, "Password", wx.Point(14,82), wx.DefaultSize)
-	
+        
         self.userEdit = wx.TextCtrl(self, wx.ID_ANY, "", wx.Point(74,53), wx.Size(190,19))
         self.passEdit = wx.TextCtrl(self, wx.ID_ANY, "", wx.Point(74,79), wx.Size(190,19), wx.TE_PASSWORD)
 
@@ -365,23 +366,23 @@ class ConfigDialogRhapsody(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
-	feedLabel = wx.StaticText(self, wx.ID_ANY, "Rhapsody URL", wx.Point(8,29))
+        feedLabel = wx.StaticText(self, wx.ID_ANY, "Rhapsody URL", wx.Point(8,29))
 
-	self.feedEdit = wx.TextCtrl(self, wx.ID_ANY, "", wx.Point(84,27), wx.Size(190,19))
+        self.feedEdit = wx.TextCtrl(self, wx.ID_ANY, "", wx.Point(84,27), wx.Size(190,19))
 
-	feedLabel2 = wx.StaticText(self, wx.ID_ANY, "Paste your ", wx.Point(15, 52))
-	feedLabel2.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK));
-	feedLabel3 = wx.HyperlinkCtrl(self, wx.ID_ANY, "Recently Played Tracks", "http://www.rhapsody.com/myrhapsody/feeds.html", wx.Point(70,52))
-	feedLabel3.SetNormalColour(wx.BLUE);
-	feedLabel3.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK));
+        feedLabel2 = wx.StaticText(self, wx.ID_ANY, "Paste your ", wx.Point(15, 52))
+        feedLabel2.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK));
+        feedLabel3 = wx.HyperlinkCtrl(self, wx.ID_ANY, "Recently Played Tracks", "http://www.rhapsody.com/myrhapsody/feeds.html", wx.Point(70,52))
+        feedLabel3.SetNormalColour(wx.BLUE);
+        feedLabel3.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK));
         feedLabel4 = wx.StaticText(self, wx.ID_ANY, " RSS feed above.", wx.Point(181, 52))
-	feedLabel4.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK));
+        feedLabel4.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK));
 
-	checkLabel = wx.StaticText(self, wx.ID_ANY, "Check Rhapsody every", wx.Point(8,92))
-	self.checkEdit = wx.TextCtrl(self, wx.ID_ANY, "2", wx.Point(123,90), wx.Size(62,19))
-	checkLabel2 = wx.StaticText(self, wx.ID_ANY, "minutes", wx.Point(188,92))
+        checkLabel = wx.StaticText(self, wx.ID_ANY, "Check Rhapsody every", wx.Point(8,92))
+        self.checkEdit = wx.TextCtrl(self, wx.ID_ANY, "2", wx.Point(123,90), wx.Size(62,19))
+        checkLabel2 = wx.StaticText(self, wx.ID_ANY, "minutes", wx.Point(188,92))
 
-	self.startCheckbox = wx.CheckBox(self, wx.ID_ANY, "Start Rhapsody when starting RhapScrobbler", wx.Point(10,134), wx.Size(250,17))
+        self.startCheckbox = wx.CheckBox(self, wx.ID_ANY, "Start Rhapsody when starting RhapScrobbler", wx.Point(10,134), wx.Size(250,17))
 
 
 class MainApp(wx.App):
