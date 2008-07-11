@@ -171,7 +171,7 @@ class MainFrame(wx.Frame):
         d = ConfigDialog(self, wx.ID_ANY)
 
         if d.ShowModal() == wx.ID_OK:
-            self.reinitialize()
+            self.initialize()
 
     def checkRhapsody(self, event=None):
         tracks = self.rhapsody.getTracks(self.lastTimestamp)
@@ -336,7 +336,7 @@ class ConfigDialog(wx.Dialog):
                 config["LastFM"]["password"] = xor_crypt_string(config["LastFM"]["password"])
 
             RSConfig.save(config)
-            self.EndModal(wx.OK)
+            self.EndModal(wx.ID_OK)
 
     def btnCancel(self, event):
         self.EndModal(wx.ID_CANCEL)
