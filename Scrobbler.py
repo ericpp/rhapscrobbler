@@ -1,5 +1,6 @@
 import time
 import urllib
+import urllib2
 import md5
 
 from RSConfig import xor_crypt_string
@@ -33,7 +34,7 @@ class Scrobbler:
             'a' : token
         }
             
-        response = urllib.urlopen('http://post.audioscrobbler.com/?'+ urllib.urlencode(params)).read()
+        response = urllib2.urlopen('http://post.audioscrobbler.com/?'+ urllib.urlencode(params)).read()
 
         stuff = response.split('\n')
 
@@ -71,11 +72,9 @@ class Scrobbler:
         if mbTrackID   != None: params['m[0]'] = mbTrackID
         
         params = 's=%s&a[0]=%s&t[0]=%s&i[0]=%d&o[0]=P&r[0]=L&l[0]=%d&b[0]=%s&n[0]=&m[0]=' % (self.sessionID, artist, track, startTime, trackLength, album)
-# var trackdata:String='s='+sessionid+'&a[0]='+Artist+'&t[0]='+TrackName+'&i[0]='+TimeStamp+'&o[0]=P&r[0]=L&l[0]='+TrackLength+'&b[0]='+Album+'&n[0]='+TrackNumber+'&m[0]=';
         
-        response = urllib.urlopen(self.submissionURL, params).read()
-        print params
-        print response
+        req = urllib2.Request(url=self.submissionURL, data=params, headers={ "Content-Type": "application/x-www-form-urlencoded" })
+        response = urllib2.urlopen(req).read()
         stuff = response.split('\n')
 
         if stuff[0] == "BADSESSION" and rep == False:

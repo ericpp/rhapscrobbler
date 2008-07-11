@@ -126,7 +126,7 @@ class MainFrame(wx.Frame):
 
 
             if config["LastFM"].has_key("username") and config["LastFM"].has_key("password"):
-                self.scrobbler = Scrobbler.Scrobbler(config["LastFM"]["username"], config["LastFM"]["password"])
+                self.scrobbler = Scrobbler.Scrobbler(config["LastFM"]["username"], xor_crypt_string(config["LastFM"]["password"]))
             
             if config["Rhapsody"].has_key("url"):
                 try:
