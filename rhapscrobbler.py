@@ -102,7 +102,12 @@ class MainFrame(wx.Frame):
         wx.InitAllImageHandlers()
 
         self.tbIcon = wx.TaskBarIcon()
-        self.tbIcon.SetIcon(wx.Icon("icon.ico", wx.BITMAP_TYPE_ICO), "lawl")
+
+        if sys.argv[0].endswith(".exe"):
+            self.tbIcon.SetIcon(wx.Icon(sys.argv[0], wx.BITMAP_TYPE_ICO), "lawl")
+        else:
+            self.tbIcon.SetIcon(wx.Icon("icon.ico", wx.BITMAP_TYPE_ICO), "lawl")
+
         self.tbIcon.Bind(wx.EVT_TASKBAR_LEFT_UP, self.toggleWindow)
         
         self.initialize(False)
@@ -389,6 +394,12 @@ class MainApp(wx.App):
     def OnInit(self):
         frame = MainFrame(None, -1, "RhapScrobbler")
         frame.Show(True)
+        
+        if sys.argv[0].endswith(".exe"):
+            frame.SetIcon(wx.Icon(sys.argv[0], wx.BITMAP_TYPE_ICO))
+        else:
+            frame.SetIcon(wx.Icon("icon.ico", wx.BITMAP_TYPE_ICO))
+
         self.SetTopWindow(frame)
         return 1
 
