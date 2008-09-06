@@ -4,9 +4,10 @@ import time
 import urllib
 import cStringIO
 import os
+import threading
 
 import Scrobbler
-import RhapsodyRSS
+import Rhapsody
 import RSConfig
 
 from RSConfig import xor_crypt_string
@@ -39,6 +40,8 @@ class MainFrame(wx.Frame):
     lastTimestamp = None
     rhapsody = None
     scrobbler = None
+    lock = None
+    syncthread = None
     
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, -1, title, size=wx.Size(400,225), style = wx.DEFAULT_FRAME_STYLE | WX_STAY_ON_TOP)
@@ -110,6 +113,8 @@ class MainFrame(wx.Frame):
 
         self.tbIcon.Bind(wx.EVT_TASKBAR_LEFT_UP, self.toggleWindow)
         
+        self.lock = threading.RLock()
+
         self.initialize(False)
 
         self.Show(True)
@@ -129,31 +134,34 @@ class MainFrame(wx.Frame):
                 self.scrobbler = Scrobbler.Scrobbler(config["LastFM"]["username"], xor_crypt_string(config["LastFM"]["password"]))
             
             if config["Rhapsody"].has_key("url"):
+                self.rhapsody = Rhapsody.Rhapsody(config["Rhapsody"]["url"])
+
                 try:
-                    self.rhapsody = RhapsodyRSS.RhapsodyRSS(config["Rhapsody"]["url"])
-                    self.checkRhapsody()
+                    tracks = self.rhapsody.getTracks()
+                    
+                    if len(tracks) > 0:
+                        self.updateLastTrack(tracks[0]['track'], tracks[0]['artist'], tracks[0]['album'], tracks[0]['albumArt'])
+                        
                 except:
-                    wx.MessageBox("Error loading tracks from Rhapsody URL", "Rhapsody Error")
+                    wx.MessageBox("An error occurred while loading tracks from Rhapsody", "Error")
 
 
         if self.scrobbler != None and self.rhapsody != None:
 
             if self.trackTimer != None:
                 # remove the old timer
-                self.trackTimer.Stop()
+                self.trackTimer.cancel()
                 del self.trackTimer
             
             # create/start the rhapsody polling timer
-            self.trackTimer = wx.Timer(self, ID_TIMER)
-            wx.EVT_TIMER(self, ID_TIMER, self.checkRhapsody)
-
             if config["Rhapsody"].has_key("poll"):
                 # using user-specified poll delay
-                self.trackTimer.Start(int(config["Rhapsody"]["poll"]))
+                self.trackTimer = PeriodicThread(float(config["Rhapsody"]["poll"]) / 1000.0, self.syncThread)
             else:
                 # default to two-minute poll delay
-                self.trackTimer.Start(120000)
-        
+                self.trackTimer = PeriodicThread(120.0, self.syncThread)
+
+            self.trackTimer.start()
     
     def toggleWindow(self, event):
         if self.IsShown():
@@ -166,6 +174,7 @@ class MainFrame(wx.Frame):
         self.Hide()
     
     def onClose(self, event):
+        self.trackTimer.cancel()
         self.tbIcon.RemoveIcon()
         self.Destroy()
     
@@ -178,24 +187,28 @@ class MainFrame(wx.Frame):
         if d.ShowModal() == wx.ID_OK:
             self.initialize()
 
-    def checkRhapsody(self, event=None):
-        tracks = self.rhapsody.getTracks(self.lastTimestamp)
+    def syncThread(self):
 
-        if len(tracks) > 0:
-            self.updateLastTrack(tracks[0]['track'], tracks[0]['artist'], tracks[0]['album'], tracks[0]['albumArt'])
+        if self.scrobbler != None and self.rhapsody != None:
+            try:
+                asTracks = self.scrobbler.getTracks()
 
-            if self.lastTimestamp != None:
-                for track in tracks:
+                if len(asTracks) > 0:
+                    rsTracks = self.rhapsody.getTracks(asTracks[0]['timestamp'])
+                else:
+                    rsTracks = self.rhapsody.getTracks()
+            except:
+                return
+
+            if len(rsTracks) > 0:
+                wx.CallAfter(self.updateLastTrack, rsTracks[0]['track'], rsTracks[0]['artist'], rsTracks[0]['album'], rsTracks[0]['albumArt'])
+
+                for track in reversed(rsTracks):
                     self.scrobbler.submit(artist = track['artist'], track = track['track'], album = track['album'], startTime = track['timestamp'], trackLength = track['duration'])
-                    
-            self.lastTimestamp = tracks[0]['timestamp']
+
+
 
     def updateLastTrack(self, track, artist, album, albumArt = None):
-
-        songTrack = wx.StaticText(self.mainPanel, wx.ID_ANY, track);
-        songArtist = wx.StaticText(self.mainPanel, wx.ID_ANY, artist);
-        songAlbum = wx.StaticText(self.mainPanel, wx.ID_ANY, album);
-
         img = wx.NullImage
 
         if albumArt != None:
@@ -207,11 +220,14 @@ class MainFrame(wx.Frame):
                 img = wx.ImageFromStream(cStringIO.StringIO(data), wx.BITMAP_TYPE_JPEG)
                 img.Rescale(96,96)
 
-            except Exception, e:
+            except:
                 img = wx.NullImage
                 pass
 
         albumArt = wx.StaticBitmap(self.mainPanel, wx.ID_ANY, wx.BitmapFromImage(img), size = wx.Size(96,96))
+        songTrack = wx.StaticText(self.mainPanel, wx.ID_ANY, track);
+        songArtist = wx.StaticText(self.mainPanel, wx.ID_ANY, artist);
+        songAlbum = wx.StaticText(self.mainPanel, wx.ID_ANY, album);
 
         self.lastSongSizer1.Replace(self.albumArt, albumArt)
         self.lastSongSizer2.Replace(self.songTrack, songTrack)
@@ -229,6 +245,7 @@ class MainFrame(wx.Frame):
         self.albumArt = albumArt
 
         self.GetSizer().Layout()
+        
 
 class ConfigDialog(wx.Dialog):
     parent = None
@@ -263,7 +280,7 @@ class ConfigDialog(wx.Dialog):
                 
             if config["Rhapsody"].has_key("poll"):
                 # convert the poll time from microseconds to minutes
-                self.rhapsody.checkEdit.SetValue(str(int(config["Rhapsody"]["poll"]) / 60000))
+                self.rhapsody.checkEdit.SetValue(str(float(config["Rhapsody"]["poll"]) / 60000))
 
             if config["Rhapsody"].has_key("startrhapsody"):
                 if config["Rhapsody"]["startrhapsody"] == "True":
@@ -283,8 +300,8 @@ class ConfigDialog(wx.Dialog):
         cancelButton.Bind(wx.EVT_BUTTON, self.btnCancel)
 
         buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
-        buttonSizer.Add(okButton, 0, wx.ALIGN_CENTER)
-        buttonSizer.Add(cancelButton, 0, wx.ALIGN_CENTER)
+        buttonSizer.Add(okButton, 0, wx.ALL | wx.ALIGN_CENTER, 10)
+        buttonSizer.Add(cancelButton, 0, wx.ALL | wx.ALIGN_CENTER, 10)
         buttonPanel.SetSizer(buttonSizer)
         
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -304,7 +321,7 @@ class ConfigDialog(wx.Dialog):
 
             Rhapsody = dict(
                 url = self.rhapsody.feedEdit.GetValue(),
-                poll = str(int(self.rhapsody.checkEdit.GetValue()) * 60000),
+                poll = str(float(self.rhapsody.checkEdit.GetValue()) * 60000),
                 startrhapsody = str(self.rhapsody.startCheckbox.GetValue())
             )
         )
@@ -329,7 +346,7 @@ class ConfigDialog(wx.Dialog):
             valid = False
         else:
             try:
-                rhapsody = RhapsodyRSS.RhapsodyRSS(config["Rhapsody"]["url"])
+                rhapsody = Rhapsody.Rhapsody(config["Rhapsody"]["url"])
                 rhapsody.getTracks()
             except:
                 wx.MessageBox("Bad Rhapsody URL specified", "Rhapsody Error")
@@ -384,7 +401,7 @@ class ConfigDialogRhapsody(wx.Panel):
         feedLabel4.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK));
 
         checkLabel = wx.StaticText(self, wx.ID_ANY, "Check Rhapsody every", wx.Point(8,92))
-        self.checkEdit = wx.TextCtrl(self, wx.ID_ANY, "2", wx.Point(123,90), wx.Size(62,19))
+        self.checkEdit = wx.TextCtrl(self, wx.ID_ANY, "2.0", wx.Point(123,90), wx.Size(62,19))
         checkLabel2 = wx.StaticText(self, wx.ID_ANY, "minutes", wx.Point(188,92))
 
         self.startCheckbox = wx.CheckBox(self, wx.ID_ANY, "Start Rhapsody when starting RhapScrobbler", wx.Point(10,134), wx.Size(250,17))
@@ -403,6 +420,23 @@ class MainApp(wx.App):
         self.SetTopWindow(frame)
         return 1
 
+class PeriodicThread(threading.Thread):
+
+    def __init__(self, interval, function, args=[], kwargs={}):
+        threading.Thread.__init__(self)
+        self.interval = interval
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        self.finished = threading.Event()
+
+    def cancel(self):
+        self.finished.set()
+
+    def run(self):
+        while not self.finished.isSet():
+            self.function(*self.args, **self.kwargs)
+            self.finished.wait(self.interval)
 
 
 MainApp(0).MainLoop()
