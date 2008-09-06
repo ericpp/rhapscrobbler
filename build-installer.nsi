@@ -39,7 +39,7 @@
 ; MUI end ------
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
-OutFile "RhapScrobblerSetup.exe"
+OutFile "${PRODUCT_NAME}-${PRODUCT_VERSION}.exe"
 InstallDir "$PROGRAMFILES\RhapScrobbler"
 InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ShowInstDetails show
@@ -64,14 +64,7 @@ SectionEnd
 
 Section -Post
   WriteUninstaller "$INSTDIR\uninst.exe"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\CardOCR" "DisplayName" "RhapScrobbler"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\CardOCR" "UninstallString" "$INSTDIR\uninst.exe"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\CardOCR" "Publisher" "Ericpp"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\CardOCR" "URLInfoAbout" "http://code.google.com/p/rhapscrobbler/"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\CardOCR" "NoModify" "1"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\CardOCR" "NoRepair" "1"
-
-  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\CardOCR.exe"
+  WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\CardOCR.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\RhapScrobbler.exe"
@@ -97,6 +90,8 @@ Function un.onInit
 FunctionEnd
 
 Section Uninstall
+  RMDir /r "$INSTDIR"
+
   Delete "$SMPROGRAMS\RhapScrobbler\Uninstall.lnk"
   Delete "$DESKTOP\RhapScrobbler.lnk"
   Delete "$SMPROGRAMS\RhapScrobbler\RhapScrobbler.lnk"
