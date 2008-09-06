@@ -12,7 +12,8 @@ import RSConfig
 
 from RSConfig import xor_crypt_string
 
-
+ID_QUIT = 1031
+ID_RESTORE = 1030
 ID_TIMER = 1029
 ID_WXSTATICTEXT2 = 1028
 ID_WXSTATICTEXT1 = 1027
@@ -40,12 +41,11 @@ class MainFrame(wx.Frame):
     lastTimestamp = None
     rhapsody = None
     scrobbler = None
-    lock = None
-    syncthread = None
     
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, -1, title, size=wx.Size(400,225), style = wx.DEFAULT_FRAME_STYLE | WX_STAY_ON_TOP)
 
+        # window setup
         self.mainPanel = wx.Panel(self, ID_WXPANEL1, wx.Point(0,0), wx.Size(400,225))
         self.mainSizer = wx.BoxSizer(wx.VERTICAL);
         self.SetSizer(self.mainSizer);
@@ -104,17 +104,10 @@ class MainFrame(wx.Frame):
 
         wx.InitAllImageHandlers()
 
-        self.tbIcon = wx.TaskBarIcon()
+        # initialize the taskbar icon
+        self.tbIcon = RSTaskBarIcon(self)
 
-        if sys.argv[0].endswith(".exe"):
-            self.tbIcon.SetIcon(wx.Icon(sys.argv[0], wx.BITMAP_TYPE_ICO), "lawl")
-        else:
-            self.tbIcon.SetIcon(wx.Icon("icon.ico", wx.BITMAP_TYPE_ICO), "lawl")
-
-        self.tbIcon.Bind(wx.EVT_TASKBAR_LEFT_UP, self.toggleWindow)
-        
-        self.lock = threading.RLock()
-
+        # initialize the program        
         self.initialize(False)
 
         self.Show(True)
@@ -174,8 +167,10 @@ class MainFrame(wx.Frame):
         self.Hide()
     
     def onClose(self, event):
-        self.trackTimer.cancel()
-        self.tbIcon.RemoveIcon()
+        if self.trackTimer:
+            self.trackTimer.cancel()
+
+        self.tbIcon.Destroy()
         self.Destroy()
     
     def btnQuit(self, event):
@@ -406,6 +401,37 @@ class ConfigDialogRhapsody(wx.Panel):
 
         self.startCheckbox = wx.CheckBox(self, wx.ID_ANY, "Start Rhapsody when starting RhapScrobbler", wx.Point(10,134), wx.Size(250,17))
 
+class RSTaskBarIcon(wx.TaskBarIcon):
+    parent = None
+
+    def __init__(self, parent):
+        wx.TaskBarIcon.__init__(self)
+
+        if sys.argv[0].endswith(".exe"):
+            self.SetIcon(wx.Icon(sys.argv[0], wx.BITMAP_TYPE_ICO), "lawl")
+        else:
+            self.SetIcon(wx.Icon("icon.ico", wx.BITMAP_TYPE_ICO), "lawl")
+
+        self.Bind(wx.EVT_TASKBAR_LEFT_UP, parent.toggleWindow)
+        self.Bind(wx.EVT_TASKBAR_RIGHT_UP, self.ShowMenu)
+        
+        self.parent = parent
+
+    def ShowMenu(self, event):
+        menu = wx.Menu()
+        
+        if self.parent.IsShown():
+            self.Bind(wx.EVT_MENU, self.parent.toggleWindow, menu.Append(ID_RESTORE, "Hide RhapScrobbler"))
+        else:
+            self.Bind(wx.EVT_MENU, self.parent.toggleWindow, menu.Append(ID_RESTORE, "Show RhapScrobbler"))
+            
+        self.Bind(wx.EVT_MENU, self.parent.btnQuit, menu.Append(ID_QUIT, "Quit"))
+
+        self.PopupMenu(menu)
+
+    def Destroy(self):
+        self.RemoveIcon()
+        wx.TaskBarIcon.Destroy(self)
 
 class MainApp(wx.App):
     def OnInit(self):
