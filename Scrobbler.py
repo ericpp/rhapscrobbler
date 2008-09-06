@@ -2,6 +2,7 @@ import time
 import urllib
 import urllib2
 import md5
+import RSS
 
 from RSConfig import xor_crypt_string
 
@@ -18,6 +19,24 @@ class Scrobbler:
         self.username = username
         self.password = xor_crypt_string(password)
         self.clientID = clientID
+    
+    # get submitted tracks
+    def getTracks(self):
+        tracks = []
+
+        items = RSS.getItems("http://ws.audioscrobbler.com/1.0/user/" + self.username + "/recenttracks.rss")
+
+        for item in items:
+            (artist, track) = item['link'].replace("http://www.last.fm/music/", "").split("/_/")
+
+            tracks.append({
+                'artist'    : urllib.unquote_plus(artist),
+                'track'     : urllib.unquote_plus(track),
+                'timestamp' : item['pubDate']
+            })
+
+        return tracks
+        
     
     # logs into last.fm
     def handshake(self):
@@ -70,7 +89,7 @@ class Scrobbler:
         if album       != None: params['b[0]'] = album
         if trackNumber != None: params['n[0]'] = trackNumber
         if mbTrackID   != None: params['m[0]'] = mbTrackID
-        
+
         params = 's=%s&a[0]=%s&t[0]=%s&i[0]=%d&o[0]=P&r[0]=L&l[0]=%d&b[0]=%s&n[0]=&m[0]=' % (self.sessionID, artist, track, startTime, trackLength, album)
         
         req = urllib2.Request(url=self.submissionURL, data=params, headers={ "Content-Type": "application/x-www-form-urlencoded" })
