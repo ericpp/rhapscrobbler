@@ -89,10 +89,8 @@ class Scrobbler:
         if album       != None: params['b[0]'] = album
         if trackNumber != None: params['n[0]'] = trackNumber
         if mbTrackID   != None: params['m[0]'] = mbTrackID
-
-        params = 's=%s&a[0]=%s&t[0]=%s&i[0]=%d&o[0]=P&r[0]=L&l[0]=%d&b[0]=%s&n[0]=&m[0]=' % (self.sessionID, artist, track, startTime, trackLength, album)
         
-        req = urllib2.Request(url=self.submissionURL, data=params, headers={ "Content-Type": "application/x-www-form-urlencoded" })
+        req = urllib2.Request(url=self.submissionURL, data=urllib.urlencode(params), headers={ "Content-Type": "application/x-www-form-urlencoded" })
         response = urllib2.urlopen(req).read()
         stuff = response.split('\n')
 
