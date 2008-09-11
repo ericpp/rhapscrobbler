@@ -408,9 +408,9 @@ class RSTaskBarIcon(wx.TaskBarIcon):
         wx.TaskBarIcon.__init__(self)
 
         if sys.argv[0].endswith(".exe"):
-            self.SetIcon(wx.Icon(sys.argv[0], wx.BITMAP_TYPE_ICO), "lawl")
+            self.SetIcon(wx.Icon(sys.argv[0], wx.BITMAP_TYPE_ICO), "RhapScrobbler")
         else:
-            self.SetIcon(wx.Icon("icon.ico", wx.BITMAP_TYPE_ICO), "lawl")
+            self.SetIcon(wx.Icon("icon.ico", wx.BITMAP_TYPE_ICO), "RhapScrobbler")
 
         self.Bind(wx.EVT_TASKBAR_LEFT_UP, parent.toggleWindow)
         self.Bind(wx.EVT_TASKBAR_RIGHT_UP, self.ShowMenu)
